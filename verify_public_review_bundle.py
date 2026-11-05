@@ -11,6 +11,28 @@ def check_path(name):
     require(all(not p.startswith('.') or p=='.nojekyll' for p in path.parts),'Hidden publication data is not allowed')
     return path
 
+def review_counts(c):
+    pool=c['candidatePool'];require(len(pool)==497 and len({s['id'] for s in pool})==497,'Wrong review population')
+    counts=dict(candidates=497,shortlist=len(c['selectionDraft']['selectedIds']),nativeFast=0,originalDesigns=0,models=0,LigandForge=0,ExactPeptidePresent=0,ExactPeptideAbsent=0)
+    require(counts['shortlist']==317,'Wrong highlighted population')
+    for subject in pool:
+        counts['LigandForge']+=subject['designOrigin']['method']=='LigandForge'
+        exact=[]
+        for model in subject['modelCoverage']['models']:
+            counts['models']+=1
+            engine=model['foldingEngine']
+            if engine=='boltz2-fast':counts['nativeFast']+=1
+            elif engine=='original-diffused':counts['originalDesigns']+=1
+            elif engine=='boltz2-exact':
+                require(model['target'] in ['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free'],'Unknown Exact condition')
+                exact.append(model['target'])
+                counts['ExactPeptidePresent' if model['target']=='KRAS-G12D-pMHC' else 'ExactPeptideAbsent']+=1
+            else:raise ValueError('Unapproved review engine')
+        require(not exact or sorted(exact)==sorted(['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free']),'Unpaired Exact alternatives')
+    require((counts['nativeFast'],counts['originalDesigns'],counts['LigandForge'])==(497,297,200),'Baseline model population changed')
+    require((counts['ExactPeptidePresent'],counts['ExactPeptideAbsent']) in [(0,0),(497,497)],'Only a complete paired Exact publication is allowed')
+    return counts
+
 def verify(archive,config,output=None):
     archive=Path(archive);require(digest(archive.read_bytes())==config['archive_sha256'],'Archive hash differs from approved publication')
     with tarfile.open(archive,'r:gz') as tar:
@@ -35,15 +57,16 @@ def verify(archive,config,output=None):
             if output:
                 path=output/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(body)
         workspace=json.loads(tar.extractfile('site/data/published-workspace.json').read());require(len(workspace['campaigns'])==1,'Only the approved campaign may be published')
-        c=workspace['campaigns'][0];pool={s['id']:s for s in c['candidatePool']};require(len(pool)==497 and len(c['selectionDraft']['selectedIds'])==317,'Wrong candidate or selection counts')
+        c=workspace['campaigns'][0];pool={s['id']:s for s in c['candidatePool']};counts=review_counts(c)
         require(workspace.get('decisions')==[] and not workspace.get('jobRequests'),'Private review/job state was included')
         published_models={}
         for subject in pool.values():
             require(digest(subject['sequence'].encode())==subject['sequenceSha256'],'Sequence identity differs')
             for model in subject['modelCoverage']['models']:
                 asset=model['molecularModel'];path=asset['url'].removeprefix('./');require(model['modelSha256']==asset['sha256'],'Model binding differs');require(manifest['files'][path]['sha256']==asset['sha256'],'Model file hash differs');published_models[path]=asset['sha256']
-        require(len(published_models)==794 and published_models==manifest['modelFiles'],'Wrong native model inventory')
-        result=dict(id=manifest['id'],files=len(expected),models=794,candidates=497,shortlist=317,archive_verified=True,output=str(output) if output else None)
+        require(len(published_models)==counts['models'] and published_models==manifest['modelFiles'],'Wrong native model inventory')
+        require(all(manifest['counts'].get(k,0)==v for k,v in counts.items()),'Publication counts differ from models')
+        result=dict(id=manifest['id'],files=len(expected),models=counts['models'],candidates=497,shortlist=317,archive_verified=True,output=str(output) if output else None)
         print(json.dumps(result));return result
 
 if __name__=='__main__':
