@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-05_week5-exact-public-review_002",
-  "release_tag": "2026-11-05-exact-review-002",
+  "publication_id": "2026-11-05_week5-exact-metrics-review_001",
+  "release_tag": "2026-11-05-exact-metrics-review-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "5822ca133d86fb6fe39dce8f2b87882a8d17c4342715e8253f9902ccddea7821",
-  "manifest_sha256": "a9ca12cadabbca76dd5a763f78b5a20e59f7efb511e167f034817d1f52f885e6"
+  "archive_sha256": "95f9764c533207561d72c22ac900acabc549510c1ec5a86aa3761b61ce96a5d6",
+  "manifest_sha256": "3bb8fcdb12a8c885031918510f7bf4b8c743b5f509675b89bb3e3881343e8929"
 }
