@@ -1,6 +1,11 @@
 name: Publish approved Week 5 review
 on:
   workflow_dispatch:
+    inputs:
+      publication_config:
+        description: Optional hash-bound paired Exact publication configuration
+        required: false
+        type: string
 permissions:
   contents: read
   pages: write
@@ -20,17 +25,25 @@ jobs:
       - name: Download the approved release bundle
         env:
           GH_TOKEN: ${{ github.token }}
+          PUBLICATION_CONFIG: ${{ inputs.publication_config }}
         run: |
           python3 - <<'PY'
           import json,os,re,subprocess
           from pathlib import Path
           c=json.loads(Path('publication.json').read_text())
+          if os.environ.get('PUBLICATION_CONFIG'):
+              c=json.loads(os.environ['PUBLICATION_CONFIG'])
+              assert set(c)=={'publication_id','release_tag','asset_name','archive_sha256','manifest_sha256'}
+              assert c['publication_id']=='2026-11-05_week5-exact-public-review_002'
+              assert c['release_tag']=='2026-11-05-exact-review-002'
+              assert all(re.fullmatch(r'[a-f0-9]{64}',c[k]) for k in ['archive_sha256','manifest_sha256'])
+          Path('approved-publication.json').write_text(json.dumps(c,indent=2)+'\n')
           assert re.fullmatch(r'[0-9A-Za-z_-]+',c['release_tag'])
           assert c['asset_name']=='week5-review-site.tar.gz'
           subprocess.run(['gh','release','download',c['release_tag'],'--repo',os.environ['GITHUB_REPOSITORY'],'--pattern',c['asset_name'],'--dir','package'],check=True)
           PY
       - name: Verify exact approved files and model hashes
-        run: python3 verify_public_review_bundle.py --archive package/week5-review-site.tar.gz --config publication.json --output published-site
+        run: python3 verify_public_review_bundle.py --archive package/week5-review-site.tar.gz --config approved-publication.json --output published-site
       - name: Configure GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Upload the verified static site
