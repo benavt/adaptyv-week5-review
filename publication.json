@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-05_week5-public-review_001",
-  "release_tag": "2026-11-05-review-001",
+  "publication_id": "2026-11-05_week5-exact-public-review_002",
+  "release_tag": "2026-11-05-exact-review-002",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "c772307bd79b78691508ece68bcd0e69cc48f662a78f14d906ebb2c3925598d7",
-  "manifest_sha256": "dbf1572f3754135a70d130639ccf2c2993345ab607e38ff3126ed4bd6f794fd0"
+  "archive_sha256": "5822ca133d86fb6fe39dce8f2b87882a8d17c4342715e8253f9902ccddea7821",
+  "manifest_sha256": "a9ca12cadabbca76dd5a763f78b5a20e59f7efb511e167f034817d1f52f885e6"
 }
