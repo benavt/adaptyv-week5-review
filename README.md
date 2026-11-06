@@ -1,24 +1,24 @@
 # Adaptyv Week 5 candidate review
 
-[Open the current public review](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261106-current-003).
+[Open the current public review](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261106-current-005).
 
-The validated snapshot contains **781 candidates**: 200 LigandForge, 200 RFD3,
-97 RFD4 and **284 APNovo redesigns**. All **317 existing highlights** are retained.
-APNovo's final population filtering remains pending; 64 of the 284 currently
+The validated snapshot contains **1,237 candidates**: 200 LigandForge, 200 RFD3,
+97 RFD4 and **740 APNovo redesigns**. All **317 existing highlights** are retained.
+APNovo's final population filtering remains pending; 154 of the 740 currently
 meet the provisional binder-TM ≥0.70 / heavy-atom-DockQ ≥0.23 structural gates.
 They are not automatically shortlisted, and parent RFD4 scores are not inherited.
 
-The **4,634 native model alternatives** comprise:
+The **6,002 native model alternatives** comprise:
 
 - 497 original Boltz2 Fast refolds and 297 original diffusion structures.
-- 1,568 Boltz2 Exact structures: paired G12D/peptide-free models for every
+- 2,480 Boltz2 Exact structures: paired G12D/peptide-free models for every
   displayed candidate, plus six independently refolded WT pilot controls.
 - All 994 AF3 and 994 OpenDDE Exact follow-ups for the original 497-candidate panel.
-- 284 original APNovo designs, each matched to its independent Exact refolds.
+- 740 original APNovo designs, each matched to its independent Exact refolds.
 
 The default Comparison panel shows all four generators using the same Exact
 binder–HLA and binder–peptide ipSAE scopes. Paired confidence panels also include
-all 781 candidates. Choose a point or Inspect candidate, then select the target
+all 1,237 candidates. Choose a point or Inspect candidate, then select the target
 and folding engine to inspect its exact native model. AF3/OpenDDE are viewable
 alternatives; Exact scores are not transferred to those structures. APNovo has
 no Fast models, so it is absent from the Fast comparisons. Proposed hotspot
@@ -30,9 +30,8 @@ colors are pink, HLA teal, beta2M gray, peptide gold and the designed binder blu
 scoring stage: G12D for 540 candidates, peptide-free for all 541 candidates in
 that frozen scoring cohort, and six WT pilot controls. LF_1546's G12D pose has
 no 5 Å binder–receptor interface and is explicitly unscorable, never assigned
-zero Kd. The 240 APNovo candidates added after that scoring selection have no
-PCANN estimates yet. The queued 535 additional WT controls and their scores
-remain pending; they are not shown as complete.
+zero Kd. The 696 APNovo candidates added after that scoring selection have no
+PCANN estimates yet. The 535 additional WT controls have no completed models. All six new pilot cases failed admission before inference because a readiness helper was missing; downstream WT PCANN did not run. These controls are blocked, not queued or complete.
 
 The scored interaction is **designed binder A against HLA B, beta2M C and
 presented peptide D**, or A against B/C when peptide-free. D is never treated
@@ -45,11 +44,7 @@ spent remain zero.
 
 ## Snapshot and source verification
 
-The APNovo collection was frozen at **2026-11-06 10:44 EST**, retaining 568 paired
-Exact refolds with finished native/resource validation; generation/refolding of
-the remaining 740-design APNovo campaign continues. The publication timestamp
-and exact model/method inventory are in `publication-manifest.json` and the page's
-comparison scope. This is a dated snapshot, not a live compute dashboard.
+The APNovo collection was frozen at **November 6, 2026, 13:57 EST**. All **1,480 paired Exact refolds** across all740 generated APNovo designs passed final native acceptance and finished resource validation. The public scientific snapshot was assembled at **14:11 EST**. All3,700 APNovo interface ipSAE values were independently reproduced from native PAE; original-pose comparisons use each candidate's own original design. Final population filtering remains pending. This is a dated snapshot, not a live compute dashboard.
 
 Coordinate files use gzip transport to remain under the GitHub Pages site-size
 limit. Decompression preserves the exact original native bytes. The viewer
@@ -73,6 +68,8 @@ Reviews and notes stay in each visitor's browser and can be exported. Private
 machine paths, credentials, browser review notes, job requests and execution
 queues are excluded. No scientific jobs or paid calls can run from this site.
 
-The public review uses a single-campaign full-width layout, without campaign navigation or its mobile drawer. Scientific data retain the November 6 11:13 EST snapshot.
+The public review uses a single-campaign full-width layout, without campaign navigation or its mobile drawer. Scientific data retain the November 6 14:11 EST snapshot.
 
 Publication uses the same Pages API/OIDC identity as the official deployment action, with a bounded thirty-minute status poll. A deployment POST is made once; uncertain responses and timeouts require reconciliation from the saved deployment receipt. No new deployment is created automatically. The existing write permissions, environment and concurrency protection are retained; Actions read permission verifies the uploaded artifact belongs to this exact run and commit.
+
+A pre-submission check rejects a release that would remove live native models or reduce published candidate/APNovo/PCANN counts. UI-only releases must retain newer scientific data. All final full-stick, residue-color and annotation representation controls are retained from app commit31e5d6dc631a3201d82479dd4cf38ecd850cfa79.
