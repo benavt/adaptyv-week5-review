@@ -5,6 +5,7 @@ Its ten-minute polling cap cannot be extended through the timeout input.
 """
 import json
 import os
+from collections import Counter
 from pathlib import Path
 import re
 import time
@@ -13,6 +14,17 @@ import urllib.request
 
 TERMINAL = {'deployment_failed', 'deployment_perms_error',
             'deployment_content_failed', 'deployment_cancelled', 'deployment_lost'}
+
+
+def prevent_data_regression(current, proposed):
+    """A UI-only release must not replace a newer completed-data snapshot."""
+    if Counter(current['modelFiles'].values()) - Counter(proposed['modelFiles'].values()):
+        raise ValueError('Publication would remove or replace live native models; reconcile newer data first')
+    for key in ['candidates', 'APNovo', 'PCANN']:
+        old = current.get('currentReview', {}).get(key, current.get('counts', {}).get(key, 0))
+        new = proposed.get('currentReview', {}).get(key, proposed.get('counts', {}).get(key, 0))
+        if new < old:
+            raise ValueError('Publication would regress live ' + key + '; reconcile newer data first')
 
 
 def deploy(api, oidc, artifact_id, version, receipt, *, clock=time.monotonic,
@@ -33,6 +45,7 @@ def deploy(api, oidc, artifact_id, version, receipt, *, clock=time.monotonic,
     assert re.fullmatch(r'[A-Za-z0-9_-]+', deployment_id)
     state.update(deploymentId=deployment_id, status='submitted')
     receipt.write_text(json.dumps(state, indent=2) + '\n')
+    print('Pages deployment ID:', deployment_id, flush=True)
     start = clock()
     while clock() - start < timeout:
         status = api('GET', '/pages/deployments/' + deployment_id, None).get('status', '')
@@ -78,6 +91,15 @@ def main():
     assert artifact['workflow_run']['id'] == int(run)
     assert artifact['workflow_run']['head_sha'] == version
     assert 0 < artifact['size_in_bytes'] < 1024**3
+    request = urllib.request.Request(
+        'https://benavt.github.io/adaptyv-week5-review/publication-manifest.json?preflight=' + run,
+        headers={'Accept-Encoding': 'identity'})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        raw = response.read(10 * 1024**2 + 1)
+    assert len(raw) <= 10 * 1024**2
+    current = json.loads(raw)
+    proposed = json.loads(Path('published-site/publication-manifest.json').read_text())
+    prevent_data_regression(current, proposed)
     request = urllib.request.Request(os.environ['ACTIONS_ID_TOKEN_REQUEST_URL'],
         headers={'Authorization': 'Bearer ' + os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
     with urllib.request.urlopen(request, timeout=60) as response:

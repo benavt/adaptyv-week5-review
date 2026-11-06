@@ -2,10 +2,22 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from publish_pages import deploy
+from publish_pages import deploy, prevent_data_regression
 
 
 class PagesSubmission(unittest.TestCase):
+    def test_new_data_superset_and_same_data_UI_update_are_allowed(self):
+        current = {'modelFiles': {'old': 'a'}, 'currentReview': {'candidates': 1, 'PCANN': 1}}
+        prevent_data_regression(current, current)
+        prevent_data_regression(current, {'modelFiles': {'renamed': 'a', 'new': 'b'}, 'currentReview': {'candidates': 2, 'PCANN': 2}})
+
+    def test_stale_UI_release_cannot_drop_models_or_completed_estimates(self):
+        current = {'modelFiles': {'old': 'a', 'new': 'b'}, 'currentReview': {'candidates': 2, 'PCANN': 2}}
+        with self.assertRaisesRegex(ValueError, 'native models'):
+            prevent_data_regression(current, {'modelFiles': {'old': 'a'}, 'currentReview': {'candidates': 2, 'PCANN': 2}})
+        with self.assertRaisesRegex(ValueError, 'PCANN'):
+            prevent_data_regression(current, {'modelFiles': current['modelFiles'], 'currentReview': {'candidates': 2, 'PCANN': 1}})
+
     def test_one_submission_then_poll_to_success(self):
         calls = []
         statuses = iter(['syncing_files', 'succeed'])
