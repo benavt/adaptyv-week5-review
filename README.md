@@ -1,6 +1,6 @@
 # Adaptyv Week 5 candidate review
 
-[Open the current public review](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261106-current-002).
+[Open the current public review](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261106-current-003).
 
 The validated snapshot contains **781 candidates**: 200 LigandForge, 200 RFD3,
 97 RFD4 and **284 APNovo redesigns**. All **317 existing highlights** are retained.
@@ -72,3 +72,7 @@ exploratory labels, unexpected candidates and links/special files.
 Reviews and notes stay in each visitor's browser and can be exported. Private
 machine paths, credentials, browser review notes, job requests and execution
 queues are excluded. No scientific jobs or paid calls can run from this site.
+
+The public review uses a single-campaign full-width layout, without campaign navigation or its mobile drawer. Scientific data retain the November 6 11:13 EST snapshot.
+
+Publication uses the same Pages API/OIDC identity as the official deployment action, with a bounded thirty-minute status poll. A deployment POST is made once; uncertain responses and timeouts require reconciliation from the saved deployment receipt. No new deployment is created automatically. The existing write permissions, environment and concurrency protection are retained; Actions read permission verifies the uploaded artifact belongs to this exact run and commit.
