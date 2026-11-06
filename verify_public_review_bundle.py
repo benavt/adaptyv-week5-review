@@ -1,6 +1,6 @@
 """Verify a hash-bound public site archive and optionally extract its allowlisted files."""
 from pathlib import Path,PurePosixPath
-import argparse,csv,hashlib,io,json,tarfile
+import argparse,csv,hashlib,io,json,math,tarfile
 
 def require(value,message):
     if not value:raise ValueError(message)
@@ -15,6 +15,8 @@ def review_counts(c):
     pool=c['candidatePool'];require(len(pool)==497 and len({s['id'] for s in pool})==497,'Wrong review population')
     counts=dict(candidates=497,shortlist=len(c['selectionDraft']['selectedIds']),nativeFast=0,originalDesigns=0,models=0,LigandForge=0,ExactPeptidePresent=0,ExactPeptideAbsent=0)
     require(counts['shortlist']==317,'Wrong highlighted population')
+    wt_ids=set(c.get('affinityPilot',{}).get('candidates',[]))
+    if wt_ids:counts['ExactWT']=0
     for subject in pool:
         counts['LigandForge']+=subject['designOrigin']['method']=='LigandForge'
         exact=[]
@@ -24,11 +26,11 @@ def review_counts(c):
             if engine=='boltz2-fast':counts['nativeFast']+=1
             elif engine=='original-diffused':counts['originalDesigns']+=1
             elif engine=='boltz2-exact':
-                require(model['target'] in ['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free'],'Unknown Exact condition')
+                require(model['target'] in ['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free']+(['KRAS-WT-pMHC'] if subject['id'] in wt_ids else []),'Unknown Exact condition')
                 exact.append(model['target'])
-                counts['ExactPeptidePresent' if model['target']=='KRAS-G12D-pMHC' else 'ExactPeptideAbsent']+=1
+                counts['ExactWT' if model['target']=='KRAS-WT-pMHC' else 'ExactPeptidePresent' if model['target']=='KRAS-G12D-pMHC' else 'ExactPeptideAbsent']+=1
             else:raise ValueError('Unapproved review engine')
-        require(not exact or sorted(exact)==sorted(['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free']),'Unpaired Exact alternatives')
+        require(not exact or sorted(exact)==sorted(['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free']+(['KRAS-WT-pMHC'] if subject['id'] in wt_ids else [])),'Unpaired Exact alternatives')
     require((counts['nativeFast'],counts['originalDesigns'],counts['LigandForge'])==(497,297,200),'Baseline model population changed')
     require((counts['ExactPeptidePresent'],counts['ExactPeptideAbsent']) in [(0,0),(497,497)],'Only a complete paired Exact publication is allowed')
     return counts
@@ -62,6 +64,54 @@ def verify_exact_analysis(c,read_asset):
         if pool[row['candidate_id']]['designOrigin']['method']=='LigandForge':require('original' not in row['comparison'],'Invented LigandForge reference pose')
     summary=json.loads(assets['summary.json']);require(summary['candidates']==497 and summary['independent_interfaces']==2485,'Summary denominator differs')
     return dict(conditions=994,pairs=497,poseComparisons=2879,independentInterfaces=2485)
+
+
+def verify_affinity_pilot(c,read_asset):
+    pilot=c.get('affinityPilot')
+    if pilot is None:
+        require(not any(o['metric']=='Kd_nM' for s in c['candidatePool'] for m in s['modelCoverage']['models'] for o in m.get('observations',[])),'Undeclared affinity observations')
+        return None
+    expected={'RFD3_7110040','RFD3_7116080','RFD4_8105063','RFD4_8105052','LF_1965','LF_1341'}
+    require(set(pilot['candidates'])==expected and len(pilot['WTmodels'])==6,'Wrong exploratory pilot selection')
+    require(pilot['status']=='completed_exploratory' and pilot['calibrationForPmhc']=='unvalidated_exploratory' and pilot['creditsSpent']==0 and pilot['providerCalls']==0,'Exploratory pilot boundary differs')
+    pool={s['id']:s for s in c['candidatePool']}
+    def load(ref):
+        p=ref['path'].removeprefix('site/');check_path('site/'+p);body=read_asset(p);require(digest(body)==ref['sha256'],'Affinity source hash differs');return body
+    assets={r['label']:load(r) for r in pilot['assets']};summary=json.loads(assets['pilot-summary.json'])
+    require(summary['cases']==18 and summary['candidates']==6 and len(summary['predictions'])==18,'Wrong pilot denominator')
+    predictions={(r['candidate_id'],r['condition']):r for r in summary['predictions']}
+    require(set(predictions)=={(sid,cond) for sid in expected for cond in ['G12D','WT','peptide_free']},'Incomplete pilot panel')
+    conditions={'G12D':'KRAS-G12D-pMHC','WT':'KRAS-WT-pMHC','peptide_free':'HLA-A11-beta2M-peptide-free'}
+    calibrations=set();count=0
+    for s in pool.values():
+        for m in s['modelCoverage']['models']:
+            for o in m.get('observations',[]):
+                if o['metric']!='Kd_nM':continue
+                count+=1;cond=next((k for k,v in conditions.items() if v==m['target']),None)
+                require(s['id'] in expected and (s['id'],cond) in predictions,'Unapproved affinity scope')
+                r=predictions[s['id'],cond];raw=json.loads(load(o['source']))
+                require(raw==r,'PCANN source result differs from summary')
+                require(o['value']==r['kd_nM'] and o['value']>0 and o['unit']=='nM','Kd differs or units invalid')
+                require(o['modelId']==m['id']==r['model_id'] and o['modelSha256']==m['modelSha256']==r['model_sha256'],'Affinity model binding differs')
+                require(o['scientificAcceptance']=='needs_review' and 'exploratory' in o['method'] and 'exploratory' in o['label'],'Missing exploratory qualification')
+                rec=['B','C'] if cond=='peptide_free' else ['B','C','D']
+                require(o['scope']['binder']==r['binder']=='A' and o['scope']['receptorChains']==r['receptor_chains']==rec,'Wrong biological partner grouping')
+                require(r['chains']['A']==s['sequence'] and len(r['chains']['B'])==281 and len(r['chains']['C'])==99,'Native chain sequences differ')
+                require(('D' not in r['chains']) if cond=='peptide_free' else r['chains']['D']==('VVVGAGGVGK' if cond=='WT' else 'VVVGADGVGK'),'Wrong presented peptide condition')
+                require(m['molecularModel']['roles']==dict(binder='A',receptor='B') and m['molecularModel']['contextChains']==rec[1:],'Display chain grouping differs')
+                energies=[round(v*.001987204258*298,2) for v in r['raw_ensemble_logKd']]
+                require(len(energies)==25 and energies==r['ensemble_deltaG_kcal_mol'] and round(sum(energies)/25,2)==r['deltaG_kcal_mol'],'PCANN ensemble reduction differs')
+                require(math.isclose(math.exp(r['deltaG_kcal_mol']/(.001987204258*298))*1e9,o['value'],rel_tol=1e-12),'Kd conversion differs')
+                calibrations.add(o['calibrationId'])
+    require(count==18 and len(calibrations)==1,'Wrong observation count or mixed calibration')
+    require(len(pilot['observations'])==18 and len({r['observationId'] for r in pilot['observations']})==18,'Pilot observation audit differs')
+    for row in pilot['WTmodels']:
+        m=next(m for m in pool[row['candidateId']]['modelCoverage']['models'] if m['id']==row['modelId'])
+        require(m['target']=='KRAS-WT-pMHC' and m['modelSha256']==row['modelSha256'],'WT identity differs')
+        require(all(o['metric']=='Kd_nM' for o in m['observations']),'Uncalculated WT confidence was invented')
+    presets=[p for p in c['explorerPlotPresets'] if p['id'].startswith('pcann-')]
+    require(len(presets)==3 and all(p.get('sharedAxes') and p.get('identityLine') and 'Exploratory' in p['label'] for p in presets),'Missing exploratory comparison plots')
+    return dict(candidates=6,WTmodels=6,PCANNestimates=18,calibration='unvalidated_exploratory',plots=3)
 
 def verify(archive,config,output=None):
     archive=Path(archive);require(digest(archive.read_bytes())==config['archive_sha256'],'Archive hash differs from approved publication')
@@ -97,7 +147,8 @@ def verify(archive,config,output=None):
         require(len(published_models)==counts['models'] and published_models==manifest['modelFiles'],'Wrong native model inventory')
         require(all(manifest['counts'].get(k,0)==v for k,v in counts.items()),'Publication counts differ from models')
         exact_analysis=verify_exact_analysis(c,lambda path:tar.extractfile('site/'+path).read())
-        result=dict(exactAnalysis=exact_analysis,id=manifest['id'],files=len(expected),models=counts['models'],candidates=497,shortlist=317,archive_verified=True,output=str(output) if output else None)
+        affinity=verify_affinity_pilot(c,lambda path:tar.extractfile('site/'+path).read())
+        result=dict(affinityPilot=affinity,exactAnalysis=exact_analysis,id=manifest['id'],files=len(expected),models=counts['models'],candidates=497,shortlist=317,archive_verified=True,output=str(output) if output else None)
         print(json.dumps(result));return result
 
 if __name__=='__main__':
