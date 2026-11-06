@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-05_week5-exact-metrics-review_001",
-  "release_tag": "2026-11-05-exact-metrics-review-001",
+  "publication_id": "2026-11-06_week5-selectivity-review_001",
+  "release_tag": "2026-11-06-selectivity-review-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "95f9764c533207561d72c22ac900acabc549510c1ec5a86aa3761b61ce96a5d6",
-  "manifest_sha256": "3bb8fcdb12a8c885031918510f7bf4b8c743b5f509675b89bb3e3881343e8929"
+  "archive_sha256": "1049e799f9ecbe485ad3fbce473ed9e80e14fd58fe1b65293c5672ca4e7311c6",
+  "manifest_sha256": "b7887b9321b83ff0c831f2d6f16596542fb163373ad025e533d96b287e27b384"
 }

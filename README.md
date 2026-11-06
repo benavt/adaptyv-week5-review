@@ -53,3 +53,5 @@ Exact updates require all 497 paired conditions and retain every baseline model.
 
 Scored Exact updates additionally verify all 994 condition bindings, 497 pairs,
 2,879 pose comparisons, source hashes and missing peptide/original-pose rules.
+
+The November6 selectivity repair exposes the recorded HLA, beta2M and peptide interface confidence for all497 candidates in Target comparison. Native structures, scientific values and317 highlights are unchanged. Kd and experimental selectivity remain unreported.
