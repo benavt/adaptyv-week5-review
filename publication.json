@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-06_pmhc-affinity-pilot-review_001",
-  "release_tag": "2026-11-06-affinity-pilot-review-001",
+  "publication_id": "2026-11-06_week5-current-review_002",
+  "release_tag": "2026-11-06-current-review-002",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "2a53346513f38ab57b3a34678ec906939d2aa30eb2252039b8e5c287d4a895e6",
-  "manifest_sha256": "592a0afbafcdd147714394a801de4d8364eaf4b0dbbe7af7a976aabb38372a1b"
+  "archive_sha256": "53f6aee939e784808d7929aee626a2966c410ff2ec230dd54acf11065339d131",
+  "manifest_sha256": "4ac3638c125016c41e8137d45ebe22924327b30e38cd8bb7e3e47b5cff5c2e5c"
 }

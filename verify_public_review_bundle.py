@@ -1,6 +1,6 @@
 """Verify a hash-bound public site archive and optionally extract its allowlisted files."""
 from pathlib import Path,PurePosixPath
-import argparse,csv,hashlib,io,json,math,tarfile
+import argparse,csv,gzip,hashlib,io,json,math,tarfile
 
 def require(value,message):
     if not value:raise ValueError(message)
@@ -12,6 +12,7 @@ def check_path(name):
     return path
 
 def review_counts(c):
+    if c.get('publicDataSnapshot'):return review_counts_current(c)
     pool=c['candidatePool'];require(len(pool)==497 and len({s['id'] for s in pool})==497,'Wrong review population')
     counts=dict(candidates=497,shortlist=len(c['selectionDraft']['selectedIds']),nativeFast=0,originalDesigns=0,models=0,LigandForge=0,ExactPeptidePresent=0,ExactPeptideAbsent=0)
     require(counts['shortlist']==317,'Wrong highlighted population')
@@ -39,7 +40,7 @@ def verify_exact_analysis(c,read_asset):
     analysis=c.get('exactMetricsAnalysis')
     if analysis is None:return None
     require(analysis['status']=='computed_validated' and analysis['independent_interfaces']==2485,'Exact analysis is not validated')
-    pool={s['id']:s for s in c['candidatePool']};assets={}
+    pool={s['id']:s for s in c['candidatePool'] if s['designOrigin']['method']!='APNovo'};assets={}
     for ref in analysis['assets']:
         path=ref['path'].removeprefix('site/');check_path('site/'+path);body=read_asset(path)
         require(digest(body)==ref['sha256'],'Exact analysis source hash differs');assets[path.rsplit('/',1)[-1]]=body
@@ -82,11 +83,13 @@ def verify_affinity_pilot(c,read_asset):
     predictions={(r['candidate_id'],r['condition']):r for r in summary['predictions']}
     require(set(predictions)=={(sid,cond) for sid in expected for cond in ['G12D','WT','peptide_free']},'Incomplete pilot panel')
     conditions={'G12D':'KRAS-G12D-pMHC','WT':'KRAS-WT-pMHC','peptide_free':'HLA-A11-beta2M-peptide-free'}
+    pilot_observation_ids={r['observationId'] for r in pilot['observations']}
     calibrations=set();count=0
     for s in pool.values():
         for m in s['modelCoverage']['models']:
             for o in m.get('observations',[]):
                 if o['metric']!='Kd_nM':continue
+                if c.get('pcannProduction') and o['id'] not in pilot_observation_ids:continue
                 count+=1;cond=next((k for k,v in conditions.items() if v==m['target']),None)
                 require(s['id'] in expected and (s['id'],cond) in predictions,'Unapproved affinity scope')
                 r=predictions[s['id'],cond];raw=json.loads(load(o['source']))
@@ -113,6 +116,68 @@ def verify_affinity_pilot(c,read_asset):
     require(len(presets)==3 and all(p.get('sharedAxes') and p.get('identityLine') and 'Exploratory' in p['label'] for p in presets),'Missing exploratory comparison plots')
     return dict(candidates=6,WTmodels=6,PCANNestimates=18,calibration='unvalidated_exploratory',plots=3)
 
+
+def review_counts_current(c):
+    pool=c['candidatePool'];snap=c['publicDataSnapshot'];n=len(pool)
+    require(n==snap['candidates'] and len({s['id'] for s in pool})==n,'Wrong current review population')
+    require(len(c['selectionDraft']['selectedIds'])==317,'Changed highlighted population')
+    counts=dict(candidates=n,shortlist=317,nativeFast=0,originalDesigns=0,models=0,LigandForge=0,ExactPeptidePresent=0,ExactPeptideAbsent=0,ExactWT=0,APNovo=0,APNovoOriginals=0,AF3=0,OpenDDE=0)
+    allowed={'boltz2-fast':'nativeFast','original-diffused':'originalDesigns','apnovo-original':'APNovoOriginals','af3':'AF3','opendde-exact':'OpenDDE'}
+    for s in pool:
+        ap=s['designOrigin']['method']=='APNovo';counts['APNovo']+=ap;counts['LigandForge']+=s['designOrigin']['method']=='LigandForge';models=s['modelCoverage']['models']
+        exact=[m['target'] for m in models if m['foldingEngine']=='boltz2-exact'];wt=s['id'] in c['affinityPilot']['candidates']
+        require(sorted(exact)==sorted(['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free']+(['KRAS-WT-pMHC'] if wt else [])),'Unpaired native Exact conditions')
+        if ap:require(len(models)==3 and s['filteringStatus']['final']=='pending' and s['id'] not in c['selectionDraft']['selectedIds'],'APNovo model/filtering scope differs')
+        for m in models:
+            counts['models']+=1;engine=m['foldingEngine']
+            if engine=='boltz2-exact':
+                counts[{'KRAS-G12D-pMHC':'ExactPeptidePresent','HLA-A11-beta2M-peptide-free':'ExactPeptideAbsent','KRAS-WT-pMHC':'ExactWT'}[m['target']]]+=1
+            else:require(engine in allowed,'Unknown model engine');counts[allowed[engine]]+=1
+            if engine in ['af3','opendde-exact']:require(not ap and not m.get('observations'),'Alternative engine inherited incompatible scores')
+    require((counts['nativeFast'],counts['originalDesigns'],counts['LigandForge'],counts['AF3'],counts['OpenDDE'],counts['ExactWT'])==(497,297,200,994,994,6),'Baseline/alternative engine population differs')
+    require(counts['APNovo']==snap['APNovo']==c['apnovoReviewIntegration']['candidates'] and counts['APNovoOriginals']==counts['APNovo'] and n==497+counts['APNovo'],'APNovo population differs')
+    return counts
+
+
+def verify_current_review(c,read_asset):
+    snap=c['publicDataSnapshot'];pool={s['id']:s for s in c['candidatePool']};counts=review_counts_current(c)
+    def load(ref):
+        path=ref['path'].removeprefix('site/');check_path('site/'+path);b=read_asset(path);require(digest(b)==ref['sha256'],'Current review source hash differs');return json.loads(b)
+    source=load(snap['inventory']);require(len(source['candidates'])==counts['candidates'],'Current source denominator differs')
+    expected={r['id']:r for r in source['candidates']};require(set(expected)==set(pool),'Current source candidate identities differ')
+    for sid,s in pool.items():
+        row=expected[sid];require(s['sequenceSha256']==row['sequenceSha256'] and s['designOrigin']['method']==row['method'],'Candidate sequence/method differs')
+        require({m['id']:m['modelSha256'] for m in s['modelCoverage']['models']}==row['models'],'Native model identities differ')
+        if s['designOrigin']['method']=='APNovo':
+            original=next(m for m in s['modelCoverage']['models'] if m['foldingEngine']=='apnovo-original')
+            for m in s['modelCoverage']['models']:
+                for o in m.get('observations',[]):
+                    if o['metric']=='peptide_ipSAE':require(m['target']=='KRAS-G12D-pMHC','Absent peptide assigned a score')
+                    if 'DockQ' in o['metric'] or o['metric']=='apnovo_binder_TM':require(o['referenceModelId']==original['id'] and o['referenceModelSha256']==original['modelSha256'],'APNovo pose reference differs')
+    production=c['pcannProduction'];summary=load(production['source']);raw={(r['candidate_id'],r['condition']):r for r in summary['predictions']};require(len(raw)==len(summary['predictions'])==production['completedEstimates'],'PCANN count or identity differs')
+    require(production['calibrationForPmhc']=='unvalidated_exploratory' and production['providerCalls']==production['creditsSpent']==0,'PCANN boundary differs')
+    observed=set();calibrations=set()
+    for sid,s in pool.items():
+        for m in s['modelCoverage']['models']:
+            for o in m.get('observations',[]):
+                if o['metric']!='Kd_nM':continue
+                cond={'KRAS-G12D-pMHC':'G12D','KRAS-WT-pMHC':'WT','HLA-A11-beta2M-peptide-free':'peptide_free'}.get(m['target']);key=(sid,cond)
+                require(key in raw and key not in observed,'Undeclared or duplicate PCANN estimate');observed.add(key);r=raw[key]
+                require(load(o['source'])==r,'Native PCANN output differs')
+                require(o['modelId']==m['id']==r['model_id'] and o['modelSha256']==m['modelSha256']==r['model_sha256'],'PCANN native model binding differs')
+                require(m['foldingEngine']=='boltz2-exact' and o['value']==r['kd_nM'] and o['value']>0 and o['unit']=='nM','Wrong PCANN value/unit/engine')
+                require('exploratory' in o['method'] and 'exploratory' in o['label'] and o['scientificAcceptance']=='needs_review','Missing exploratory qualification')
+                rec=['B','C'] if cond=='peptide_free' else ['B','C','D'];require(o['scope']['binder']==r['binder']=='A' and o['scope']['receptorChains']==r['receptor_chains']==rec and r['chains']['A']==s['sequence'],'Wrong PCANN biological partner')
+                require(('D' not in r['chains']) if cond=='peptide_free' else r['chains']['D']==('VVVGAGGVGK' if cond=='WT' else 'VVVGADGVGK'),'Wrong PCANN presented peptide')
+                require(len(r['chains']['B'])==281 and len(r['chains']['C'])==99 and m['molecularModel']['roles']==dict(binder='A',receptor='B') and m['molecularModel']['contextChains']==rec[1:],'Truncated receptor or wrong display/scoring partners')
+                require(o['scope']['calibrationForPmhc']=='unvalidated_exploratory','Unsupported calibration claim')
+                energies=[round(v*.001987204258*298,2) for v in r['raw_ensemble_logKd']];require(len(energies)==25 and energies==r['ensemble_deltaG_kcal_mol'] and round(sum(energies)/25,2)==r['deltaG_kcal_mol'],'Wrong PCANN ensemble reduction')
+                require(math.isclose(math.exp(r['deltaG_kcal_mol']/(.001987204258*298))*1e9,o['value'],rel_tol=1e-12),'Wrong PCANN Kd conversion');calibrations.add(o['calibrationId'])
+    require(observed==set(raw) and len(calibrations)==1,'Missing scores or mixed PCANN calibration')
+    for r in summary['unscorable']:require((r['candidate_id'],r['condition']) not in observed and r['Kd_nM'] is None,'Unscorable model has a Kd')
+    require(snap['PCANN']==len(observed) and source['PCANN']==len(observed),'Snapshot PCANN count differs')
+    return dict(candidates=counts['candidates'],APNovo=counts['APNovo'],APNovoFinalFiltering='pending',AF3=counts['AF3'],OpenDDE=counts['OpenDDE'],PCANN=len(observed),calibration='unvalidated_exploratory',observedAt=snap['observedAt'])
+
 def verify(archive,config,output=None):
     archive=Path(archive);require(digest(archive.read_bytes())==config['archive_sha256'],'Archive hash differs from approved publication')
     with tarfile.open(archive,'r:gz') as tar:
@@ -129,26 +194,37 @@ def verify(archive,config,output=None):
         for name in expected:check_path(name)
         if output:
             output=Path(output);output.mkdir(parents=True,exist_ok=False)
+        content_cache={};native_transport_verified=set()
         for member in members:
             if not member.isfile():continue
             body=tar.extractfile(member).read();relative=str(PurePosixPath(member.name).relative_to('site'))
             if relative!='publication-manifest.json':
                 record=manifest['files'][relative];require(len(body)==record['bytes'] and digest(body)==record['sha256'],'Published file hash differs: '+relative)
+            if relative in manifest['modelFiles']:
+                if relative.endswith('.gz'):
+                    with gzip.GzipFile(fileobj=io.BytesIO(body)) as stream:native=stream.read(20*1024**2+1)
+                    require(len(native)<=20*1024**2 and digest(native)==manifest['modelFiles'][relative],'Decoded native model hash differs');native_transport_verified.add(relative)
+            else:content_cache[relative]=body
             if output:
                 path=output/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(body)
-        workspace=json.loads(tar.extractfile('site/data/published-workspace.json').read());require(len(workspace['campaigns'])==1,'Only the approved campaign may be published')
+        workspace=json.loads(content_cache['data/published-workspace.json']);require(len(workspace['campaigns'])==1,'Only the approved campaign may be published')
         c=workspace['campaigns'][0];pool={s['id']:s for s in c['candidatePool']};counts=review_counts(c)
         require(workspace.get('decisions')==[] and not workspace.get('jobRequests'),'Private review/job state was included')
         published_models={}
         for subject in pool.values():
             require(digest(subject['sequence'].encode())==subject['sequenceSha256'],'Sequence identity differs')
             for model in subject['modelCoverage']['models']:
-                asset=model['molecularModel'];path=asset['url'].removeprefix('./');require(model['modelSha256']==asset['sha256'],'Model binding differs');require(manifest['files'][path]['sha256']==asset['sha256'],'Model file hash differs');published_models[path]=asset['sha256']
+                asset=model['molecularModel'];path=asset['url'].removeprefix('./');require(model['modelSha256']==asset['sha256'],'Model binding differs');require(manifest['files'][path]['sha256']==asset.get('transport',{}).get('sha256',asset['sha256']),'Model file hash differs');
+                if asset.get('transport'):
+                    t=asset['transport'];require(t['compression']=='gzip' and manifest['files'][path]['bytes']==t['bytes'],'Invalid model transport')
+                    require(path in native_transport_verified,'Decoded native model was not verified')
+                published_models[path]=asset['sha256']
         require(len(published_models)==counts['models'] and published_models==manifest['modelFiles'],'Wrong native model inventory')
         require(all(manifest['counts'].get(k,0)==v for k,v in counts.items()),'Publication counts differ from models')
-        exact_analysis=verify_exact_analysis(c,lambda path:tar.extractfile('site/'+path).read())
-        affinity=verify_affinity_pilot(c,lambda path:tar.extractfile('site/'+path).read())
-        result=dict(affinityPilot=affinity,exactAnalysis=exact_analysis,id=manifest['id'],files=len(expected),models=counts['models'],candidates=497,shortlist=317,archive_verified=True,output=str(output) if output else None)
+        exact_analysis=verify_exact_analysis(c,content_cache.__getitem__)
+        affinity=verify_affinity_pilot(c,content_cache.__getitem__)
+        latest=verify_current_review(c,content_cache.__getitem__) if c.get('publicDataSnapshot') else None
+        result=dict(currentReview=latest,affinityPilot=affinity,exactAnalysis=exact_analysis,id=manifest['id'],files=len(expected),models=counts['models'],candidates=counts['candidates'],shortlist=317,archive_verified=True,output=str(output) if output else None)
         print(json.dumps(result));return result
 
 if __name__=='__main__':
