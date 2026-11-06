@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-06_week5-current-review_003",
-  "release_tag": "2026-11-06-current-review-003",
+  "publication_id": "2026-11-06_week5-viewer-options_001",
+  "release_tag": "2026-11-06-viewer-options-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "a1c1913ba124869f6bf7487262874d984663e09b484a263e22146817cbe696d8",
-  "manifest_sha256": "82bec1ad791d359a325f5e80b87f3dd5fe0d18ecd362142eb5af94dcabe5030c"
+  "archive_sha256": "72963d376d526edeb6d66a0c093ea744d9020a1e786d8260595f869f4fdfdd6a",
+  "manifest_sha256": "7b1d96a7f2e922414ccaf79657d2926fe7e20826f539526f14cc0edccf9630ce"
 }
