@@ -41,7 +41,7 @@ def deploy(api, oidc, artifact_id, version, receipt, *, clock=time.monotonic,
         'artifact_id': int(artifact_id), 'pages_build_version': version,
         'oidc_token': oidc,
     })
-    deployment_id = str(response.get('id') or version)
+    deployment_id = str(response.get('id') or response.get('status_url', '').rstrip('/').rsplit('/', 1)[-1] or version)
     assert re.fullmatch(r'[A-Za-z0-9_-]+', deployment_id)
     state.update(deploymentId=deployment_id, status='submitted')
     receipt.write_text(json.dumps(state, indent=2) + '\n')
