@@ -117,17 +117,54 @@ def verify_affinity_pilot(c,read_asset):
     return dict(candidates=6,WTmodels=6,PCANNestimates=18,calibration='unvalidated_exploratory',plots=3)
 
 
+def verify_submission_shortlist(c, read_asset=None):
+    """Bind a deliberately revised submission shortlist to its upload CSV."""
+    selection = c.get('submissionShortlist')
+    if selection is None:
+        return None
+    ids = selection['selectedIds']
+    require(selection['schemaVersion'] == 1 and len(ids) == len(set(ids)) == 20,
+            'Submission shortlist must contain twenty unique candidates')
+    pool = {s['id']: s for s in c['candidatePool']}
+    require(set(ids) <= pool.keys() and c['selectionDraft']['selectedIds'] == ids,
+            'Submission shortlist identities or order differ')
+    require(c['selectionDraft']['id'] == selection['id'] and
+            c['selectionDraft']['suggestedTarget'] == 20 and
+            c['selectionDraft']['executionAuthorized'] is False,
+            'Submission draft scope differs')
+    require([s['id'] for s in c['subjects']] == ids and
+            all(s['recommended'] == (s['id'] in ids) for s in pool.values()),
+            'Submission highlights differ from the ordered shortlist')
+    if read_asset is not None:
+        ref = selection['source']
+        path = ref['path'].removeprefix('site/')
+        check_path('site/' + path)
+        body = read_asset(path)
+        require(digest(body) == ref['sha256'], 'Submission upload CSV hash differs')
+        reader = csv.DictReader(io.StringIO(body.decode('utf-8')))
+        rows = list(reader)
+        require(reader.fieldnames == ['name', 'sequence', 'molecule_class'] and
+                [r['name'] for r in rows] == ids,
+                'Submission upload CSV schema, identities or order differ')
+        require(all(r['sequence'] == pool[r['name']]['sequence'] and
+                    r['molecule_class'] == 'protein' for r in rows),
+                'Submission upload sequences or molecule class differ')
+    return dict(candidates=20, selectedIds=ids)
+
+
 def review_counts_current(c):
     pool=c['candidatePool'];snap=c['publicDataSnapshot'];n=len(pool)
     require(n==snap['candidates'] and len({s['id'] for s in pool})==n,'Wrong current review population')
-    require(len(c['selectionDraft']['selectedIds'])==317,'Changed highlighted population')
-    counts=dict(candidates=n,shortlist=317,nativeFast=0,originalDesigns=0,models=0,LigandForge=0,ExactPeptidePresent=0,ExactPeptideAbsent=0,ExactWT=0,APNovo=0,APNovoOriginals=0,AF3=0,OpenDDE=0)
+    submission=verify_submission_shortlist(c)
+    shortlist=20 if submission else 317
+    require(len(c['selectionDraft']['selectedIds'])==shortlist,'Changed highlighted population')
+    counts=dict(candidates=n,shortlist=shortlist,nativeFast=0,originalDesigns=0,models=0,LigandForge=0,ExactPeptidePresent=0,ExactPeptideAbsent=0,ExactWT=0,APNovo=0,APNovoOriginals=0,AF3=0,OpenDDE=0)
     allowed={'boltz2-fast':'nativeFast','original-diffused':'originalDesigns','apnovo-original':'APNovoOriginals','af3':'AF3','opendde-exact':'OpenDDE'}
     for s in pool:
         ap=s['designOrigin']['method']=='APNovo';counts['APNovo']+=ap;counts['LigandForge']+=s['designOrigin']['method']=='LigandForge';models=s['modelCoverage']['models']
         exact=[m['target'] for m in models if m['foldingEngine']=='boltz2-exact'];wt=s['id'] in c['affinityPilot']['candidates']
         require(sorted(exact)==sorted(['KRAS-G12D-pMHC','HLA-A11-beta2M-peptide-free']+(['KRAS-WT-pMHC'] if wt else [])),'Unpaired native Exact conditions')
-        if ap:require(len(models)==3 and s['filteringStatus']['final']=='pending' and s['id'] not in c['selectionDraft']['selectedIds'],'APNovo model/filtering scope differs')
+        if ap:require(len(models)==3 and s['filteringStatus']['final']=='pending' and (submission or s['id'] not in c['selectionDraft']['selectedIds']),'APNovo model/filtering scope differs')
         for m in models:
             counts['models']+=1;engine=m['foldingEngine']
             if engine=='boltz2-exact':
@@ -141,6 +178,7 @@ def review_counts_current(c):
 
 def verify_current_review(c,read_asset):
     snap=c['publicDataSnapshot'];pool={s['id']:s for s in c['candidatePool']};counts=review_counts_current(c)
+    verify_submission_shortlist(c,read_asset)
     def load(ref):
         path=ref['path'].removeprefix('site/');check_path('site/'+path);b=read_asset(path);require(digest(b)==ref['sha256'],'Current review source hash differs');return json.loads(b)
     source=load(snap['inventory']);require(len(source['candidates'])==counts['candidates'],'Current source denominator differs')
@@ -224,7 +262,7 @@ def verify(archive,config,output=None):
         exact_analysis=verify_exact_analysis(c,content_cache.__getitem__)
         affinity=verify_affinity_pilot(c,content_cache.__getitem__)
         latest=verify_current_review(c,content_cache.__getitem__) if c.get('publicDataSnapshot') else None
-        result=dict(currentReview=latest,affinityPilot=affinity,exactAnalysis=exact_analysis,id=manifest['id'],files=len(expected),models=counts['models'],candidates=counts['candidates'],shortlist=317,archive_verified=True,output=str(output) if output else None)
+        result=dict(currentReview=latest,affinityPilot=affinity,exactAnalysis=exact_analysis,id=manifest['id'],files=len(expected),models=counts['models'],candidates=counts['candidates'],shortlist=counts['shortlist'],archive_verified=True,output=str(output) if output else None)
         print(json.dumps(result));return result
 
 if __name__=='__main__':
