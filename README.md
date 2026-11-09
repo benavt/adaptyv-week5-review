@@ -1,6 +1,6 @@
 # Adaptyv Week 5 candidate review
 
-[Open the twenty-candidate shortlist](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261109-viewer-002).
+[Open the twenty-candidate shortlist](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261109-viewer-controls-001).
 
 The November 9 update highlights **20 candidates** selected in the Week 5
 academic report. Their order matches the submission CSV, with **14 RFD4,
@@ -24,6 +24,12 @@ The four selected APNovo candidates are explicit report selections. Their
 recorded population-filtering status remains visible.
 
 ## Application and publication
+
+The viewer downloads the selected model’s original coordinates and can center
+rotation on the binder or a picked residue. Click the selected residue again
+to clear its highlight. The side-chain display includes alanine methyls.
+Inspect and Remove from draft have separate touch targets in the shortlist.
+[Campaign Manager PR33](https://github.com/benavt/Design_Campaign_Manager/pull/33).
 
 The November 9 viewer repair uses [Campaign Manager PR31](https://github.com/benavt/Design_Campaign_Manager/pull/31). The Models table derives its rows and columns from this campaign’s native target, folding-engine and construct metadata. G12D, peptide-free and WT conditions replace the unrelated BETII rows. All 6,002 native structures are discoverable, with 141 alternatives across the twenty shortlisted candidates. The campaign contains the untagged construct.
 
