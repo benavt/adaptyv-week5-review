@@ -1,6 +1,6 @@
 # Adaptyv Week 5 candidate review
 
-[Open the twenty-candidate shortlist](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261109-viewer-001).
+[Open the twenty-candidate shortlist](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261109-viewer-002).
 
 The November 9 update highlights **20 candidates** selected in the Week 5
 academic report. Their order matches the submission CSV, with **14 RFD4,
@@ -27,13 +27,21 @@ recorded population-filtering status remains visible.
 
 The November 9 viewer repair uses [Campaign Manager PR31](https://github.com/benavt/Design_Campaign_Manager/pull/31). The Models table derives its rows and columns from this campaign’s native target, folding-engine and construct metadata. G12D, peptide-free and WT conditions replace the unrelated BETII rows. All 6,002 native structures are discoverable, with 141 alternatives across the twenty shortlisted candidates. The campaign contains the untagged construct.
 
-The molecular viewer draws to its visible canvas directly. Target-condition
-wording and the pMHC palette use HLA teal, beta2M gray, peptide gold and binder
-blue. The published workspace preserves the existing shortlist revision and
-browser review scope. Full upstream CI and all 348 JavaScript tests passed.
-The pinned 3Dmol parser, native display transforms and cartoon mesh generation
-passed for all 141 shortlisted-candidate structures. Visual browser verification
-was unavailable on the publishing host.
+The subsequent canvas repair initializes a direct WebGL canvas with upscaling
+disabled. It checks rendered
+pixels before reporting a successful load and refits a retained camera if the
+molecule falls outside its view. A persistent graphics failure reports an error.
+The renderer releases its graphics context on disposal. The iframe and
+stylesheet use the application revision for cache renewal. [Campaign Manager PR32](https://github.com/benavt/Design_Campaign_Manager/pull/32).
+
+WebKit and Chromium each painted all twenty selected Exact models with and
+without peptide through Models → View, including recovery of a displaced camera.
+These checks use Linux browser builds. Confirmation in the user's Mac Safari
+session remains outstanding. Full upstream CI passed 349 JavaScript tests,
+538 Python tests with four optional skips, and the allowlisted public build.
+
+Target-condition wording and the pMHC palette use HLA teal, beta2M gray,
+peptide gold and binder blue.
 
 The release pinned in `publication.json` contains the approved static files.
 The Pages workflow verifies the full archive inventory, native model identities,

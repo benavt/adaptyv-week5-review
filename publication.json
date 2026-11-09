@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-09_week5-viewer-repair_001",
-  "release_tag": "2026-11-09-week5-viewer-repair-001",
+  "publication_id": "2026-11-09_week5-viewer-repair_002",
+  "release_tag": "2026-11-09-week5-viewer-repair-002",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "a9cdb668058dbe80f445a835918d17b271dc44a07a8ad9148f111f4cbd7a2200",
-  "manifest_sha256": "f5b6d81eaa57e38b554e9e76e44a47320905b84c21df14cb9c867fc06ce492db"
+  "archive_sha256": "5fdfb184c606257da6a92b2ac383abd74bd0c1f81cd5cf0eb03b4928e35168fb",
+  "manifest_sha256": "56db5da7d9fc28020bc0c88edc57c0645fda9ef84ea795f0282daff148296ecd"
 }
