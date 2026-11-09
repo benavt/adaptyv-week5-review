@@ -1,75 +1,45 @@
 # Adaptyv Week 5 candidate review
 
-[Open the current public review](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261106-current-005).
+[Open the twenty-candidate shortlist](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261109-submission-001).
 
-The validated snapshot contains **1,237 candidates**: 200 LigandForge, 200 RFD3,
-97 RFD4 and **740 APNovo redesigns**. All **317 existing highlights** are retained.
-APNovo's final population filtering remains pending; 154 of the 740 currently
-meet the provisional binder-TM ≥0.70 / heavy-atom-DockQ ≥0.23 structural gates.
-They are not automatically shortlisted, and parent RFD4 scores are not inherited.
+The November 9 update highlights **20 candidates** selected in the Week 5
+academic report. Their order matches the submission CSV, with **14 RFD4,
+2 RFD3 and 4 APNovo** sequences. An outer ring marks each selected candidate
+in the comparison plots. The ranked shortlist appears below the inspector.
+The upload CSV is available in campaign evidence.
 
-The **6,002 native model alternatives** comprise:
+## Campaign coverage
 
-- 497 original Boltz2 Fast refolds and 297 original diffusion structures.
-- 2,480 Boltz2 Exact structures: paired G12D/peptide-free models for every
-  displayed candidate, plus six independently refolded WT pilot controls.
-- All 994 AF3 and 994 OpenDDE Exact follow-ups for the original 497-candidate panel.
-- 740 original APNovo designs, each matched to its independent Exact refolds.
+The complete pool contains **1,237 candidates** and **6,002 native models**.
+It includes 200 RFD3, 97 RFD4, 200 LigandForge and 740 APNovo designs.
+There are paired Boltz2 Exact G12D and peptide-free structures for all candidates,
+six WT pilot controls, 497 Fast structures, 297 original diffusion structures,
+994 AF3 structures, 994 OpenDDE structures and 740 original APNovo structures.
 
-The default Comparison panel shows all four generators using the same Exact
-binder–HLA and binder–peptide ipSAE scopes. Paired confidence panels also include
-all 1,237 candidates. Choose a point or Inspect candidate, then select the target
-and folding engine to inspect its exact native model. AF3/OpenDDE are viewable
-alternatives; Exact scores are not transferred to those structures. APNovo has
-no Fast models, so it is absent from the Fast comparisons. Proposed hotspot
-colors are pink, HLA teal, beta2M gray, peptide gold and the designed binder blue.
+Scientific models and scores retain the **November 6, 2026** public snapshot.
+The **1,087 PCANN estimates** in this snapshot use an exploratory pMHC calibration.
+Later WT and PCANN analysis used in the academic report is outside this UI and
+shortlist update. Predicted confidence and affinity require experimental testing.
+The four selected APNovo candidates are explicit report selections. Their
+recorded population-filtering status remains visible.
 
-## Exploratory affinity evidence
+## Application and publication
 
-**1,087 grouped-PCANN estimates** are included from the completed existing-model
-scoring stage: G12D for 540 candidates, peptide-free for all 541 candidates in
-that frozen scoring cohort, and six WT pilot controls. LF_1546's G12D pose has
-no 5 Å binder–receptor interface and is explicitly unscorable, never assigned
-zero Kd. The 696 APNovo candidates added after that scoring selection have no
-PCANN estimates yet. The 535 additional WT controls have no completed models. All six new pilot cases failed admission before inference because a readiness helper was missing; downstream WT PCANN did not run. These controls are blocked, not queued or complete.
+The application was fetched from upstream main on November 9. The latest merged
+release includes [Campaign Manager PR30](https://github.com/benavt/Design_Campaign_Manager/pull/30),
+with full-stick representations, per-residue coloring, annotation controls and
+verified compressed model loading. The inspector opens on the report's lead.
+A new shortlist revision enables browser recovery of earlier draft edits.
 
-The scored interaction is **designed binder A against HLA B, beta2M C and
-presented peptide D**, or A against B/C when peptide-free. D is never treated
-as the scored ligand. All 25 checkpoint outputs, model identities and source
-hashes are retained in downloadable result records. Three shared-log-axis
-comparison panels expose G12D, WT and peptide-free estimates. PCANN calibration
-for pMHC is **unvalidated and exploratory**. These are not measured affinities
-or demonstrated selectivity. DeltaForge has not run; external scoring credits
-spent remain zero.
+The release pinned in `publication.json` contains the approved static files.
+The Pages workflow verifies the full archive inventory, native model identities,
+scientific metric bindings and every selected sequence against the upload CSV.
+A pre-deployment check rejects removal of live models or regression of published
+candidate and affinity-evidence counts.
 
-## Snapshot and source verification
+Notes and reviews are browser-local and exportable. The public review has a
+single-campaign full-width layout. It provides scientific evidence for review
+and has no scientific job-submission backend.
 
-The APNovo collection was frozen at **November 6, 2026, 13:57 EST**. All **1,480 paired Exact refolds** across all740 generated APNovo designs passed final native acceptance and finished resource validation. The public scientific snapshot was assembled at **14:11 EST**. All3,700 APNovo interface ipSAE values were independently reproduced from native PAE; original-pose comparisons use each candidate's own original design. Final population filtering remains pending. This is a dated snapshot, not a live compute dashboard.
-
-Coordinate files use gzip transport to remain under the GitHub Pages site-size
-limit. Decompression preserves the exact original native bytes. The viewer
-checks both compressed transport identity and native scientific SHA256 before
-parsing; native model IDs, atom coordinates, colors, display alignments and
-model-bound measurements retain their identities. The archive verifier checks
-all native hashes again. Current application source includes
-[Campaign Manager PR28](https://github.com/benavt/Design_Campaign_Manager/pull/28).
-Revisioned application imports prevent older cached modules from handling new
-model transport metadata.
-
-This repository contains publication controls; the scientific project repository
-remains private. Native models and selected evidence come from the exact release
-pinned in `publication.json`. An explicit Pages workflow dispatch verifies the
-archive, file allowlist, native models, original 994-condition analysis, APNovo
-source/reference identities and all published PCANN values and partner groups
-before deployment. It rejects unsupported engines, inherited scores, missing
-exploratory labels, unexpected candidates and links/special files.
-
-Reviews and notes stay in each visitor's browser and can be exported. Private
-machine paths, credentials, browser review notes, job requests and execution
-queues are excluded. No scientific jobs or paid calls can run from this site.
-
-The public review uses a single-campaign full-width layout, without campaign navigation or its mobile drawer. Scientific data retain the November 6 14:11 EST snapshot.
-
-Publication uses the same Pages API/OIDC identity as the official deployment action, with a bounded thirty-minute status poll. A deployment POST is made once; uncertain responses and timeouts require reconciliation from the saved deployment receipt. No new deployment is created automatically. The existing write permissions, environment and concurrency protection are retained; Actions read permission verifies the uploaded artifact belongs to this exact run and commit.
-
-A pre-submission check rejects a release that would remove live native models or reduce published candidate/APNovo/PCANN counts. UI-only releases must retain newer scientific data. All final full-stick, residue-color and annotation representation controls are retained from app commit31e5d6dc631a3201d82479dd4cf38ecd850cfa79.
+Deployment uses the existing Pages OIDC identity, one deployment submission and
+a bounded status poll. Receipts support reconciliation after uncertain outcomes.
