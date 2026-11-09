@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-09_week5-submission-review_001",
-  "release_tag": "2026-11-09-week5-submission-review-001",
+  "publication_id": "2026-11-09_week5-viewer-repair_001",
+  "release_tag": "2026-11-09-week5-viewer-repair-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "5b4ca3c7f44351c06d8e105dedb2f531c899fa1636fc05f9d483841bf2da2380",
-  "manifest_sha256": "7c74f0979d029c9b1a3176f29e319896b705d535712d0b3ac267e8faff890347"
+  "archive_sha256": "a9cdb668058dbe80f445a835918d17b271dc44a07a8ad9148f111f4cbd7a2200",
+  "manifest_sha256": "f5b6d81eaa57e38b554e9e76e44a47320905b84c21df14cb9c867fc06ce492db"
 }
