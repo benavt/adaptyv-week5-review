@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-09_week5-viewer-controls_001",
-  "release_tag": "2026-11-09-week5-viewer-controls-001",
+  "publication_id": "2026-11-10_week5-workspace-lifecycle_001",
+  "release_tag": "2026-11-10-week5-workspace-lifecycle-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "a7ca856b20b8ea388f0cea3bbb10eb54e7fa95583983476c31d4c1249bb7ed40",
-  "manifest_sha256": "ae854e94b0752811dad3106a8e121f3a0e6d76c6f236ac79a4c5b15f9783db99"
+  "archive_sha256": "afea0ed66d1438ac03b9badae93106055110d57bfb5477bd7ff31818bf9631d4",
+  "manifest_sha256": "dcd80fd0970eadfd7971d14405f15071372a47ecbd466f65f218e2025f2ac837"
 }
