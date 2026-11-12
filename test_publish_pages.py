@@ -2,10 +2,34 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from publish_pages import deploy, prevent_data_regression
+from publish_pages import PagesApiError, deploy, prevent_data_regression, read_uploaded_artifact
 
 
 class PagesSubmission(unittest.TestCase):
+    def test_uploaded_artifact_metadata_can_arrive_after_upload(self):
+        calls = []
+        delays = []
+
+        def api(method, path, body):
+            calls.append((method, path, body))
+            if len(calls) < 3:
+                raise PagesApiError(method, path, 404)
+            return {'name': 'github-pages'}
+
+        self.assertEqual(read_uploaded_artifact(api, 123, sleep=delays.append), {'name': 'github-pages'})
+        self.assertEqual(calls, [('GET', '/actions/artifacts/123', None)] * 3)
+        self.assertEqual(delays, [2, 4])
+
+    def test_artifact_metadata_other_http_failures_do_not_retry(self):
+        delays = []
+
+        def api(method, path, body):
+            raise PagesApiError(method, path, 403)
+
+        with self.assertRaisesRegex(PagesApiError, 'HTTP 403'):
+            read_uploaded_artifact(api, 123, sleep=delays.append)
+        self.assertEqual(delays, [])
+
     def test_status_URL_is_used_when_Pages_omits_the_id_field(self):
         calls = []
         def api(method, path, body):
