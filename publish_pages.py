@@ -16,6 +16,27 @@ TERMINAL = {'deployment_failed', 'deployment_perms_error',
             'deployment_content_failed', 'deployment_cancelled', 'deployment_lost'}
 
 
+class PagesApiError(RuntimeError):
+    def __init__(self, method, path, status):
+        super().__init__(f'Pages API {method} {path}: HTTP {status}')
+        self.status = status
+
+
+def read_uploaded_artifact(api, artifact_id, *, sleep=time.sleep):
+    """Allow the Actions artifact metadata to become visible after upload."""
+    assert str(artifact_id).isdigit() and int(artifact_id) > 0
+    path = '/actions/artifacts/' + str(artifact_id)
+    delays = (0, 2, 4, 8, 16)
+    for index, delay in enumerate(delays):
+        if delay:
+            sleep(delay)
+        try:
+            return api('GET', path, None)
+        except PagesApiError as error:
+            if error.status != 404 or index == len(delays) - 1:
+                raise
+
+
 def prevent_data_regression(current, proposed):
     """A UI-only release must not replace a newer completed-data snapshot."""
     if Counter(current['modelFiles'].values()) - Counter(proposed['modelFiles'].values()):
@@ -84,9 +105,9 @@ def main():
                 return json.load(response)
         except urllib.error.HTTPError as error:
             # Do not print a response body that could echo sensitive inputs.
-            raise RuntimeError(f'Pages API {method} {path}: HTTP {error.code}') from None
+            raise PagesApiError(method, path, error.code) from None
 
-    artifact = api('GET', '/actions/artifacts/' + artifact_id, None)
+    artifact = read_uploaded_artifact(api, artifact_id)
     assert artifact['name'] == 'github-pages' and not artifact['expired']
     assert artifact['workflow_run']['id'] == int(run)
     assert artifact['workflow_run']['head_sha'] == version
