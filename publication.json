@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-10_week5-workspace-lifecycle_001",
-  "release_tag": "2026-11-10-week5-workspace-lifecycle-001",
+  "publication_id": "2026-11-12_week5-netsolp-pool_003",
+  "release_tag": "2026-11-12-week5-netsolp-pool-003",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "afea0ed66d1438ac03b9badae93106055110d57bfb5477bd7ff31818bf9631d4",
-  "manifest_sha256": "dcd80fd0970eadfd7971d14405f15071372a47ecbd466f65f218e2025f2ac837"
+  "archive_sha256": "7c4be2f51947b5d7a79ad566b634abcccbb2fbc2ea2073159b9f37a613a726f4",
+  "manifest_sha256": "7f5c322439e040ebbe1222a058430e5a986704bcda2f40c8afc23ebd32b489c5"
 }
