@@ -1,12 +1,16 @@
 # Adaptyv Week 5 candidate review
 
-[Open the twenty-candidate shortlist](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261109-viewer-controls-001).
+[Open the Week 5 Candidate Explorer](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261112-netsolp-003).
 
 The November 9 update highlights **20 candidates** selected in the Week 5
 academic report. Their order matches the submission CSV, with **14 RFD4,
 2 RFD3 and 4 APNovo** sequences. An outer ring marks each selected candidate
 in the comparison plots. The ranked shortlist appears below the inspector.
 The upload CSV is available in campaign evidence.
+
+## NetSolP-D predictions
+
+The Candidate Explorer includes predicted solubility and purification usability for all 1,237 designs after expression in *E. coli*. Choose the NetSolP-D comparison to view both scores and download the CSV. The report-ranked twenty retain their original order.
 
 ## Campaign coverage
 
