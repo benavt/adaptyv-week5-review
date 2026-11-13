@@ -1,6 +1,6 @@
 # Adaptyv Week 5 candidate review
 
-[Open the Week 5 Candidate Explorer](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261112-netsolp-003).
+[Open the Week 5 Candidate Explorer](https://benavt.github.io/adaptyv-week5-review/?campaign=kras-g12d-pmhc-review&view=explorer&release=20261113-scatterplot-labels-001).
 
 The November 9 update highlights **20 candidates** selected in the Week 5
 academic report. Their order matches the submission CSV, with **14 RFD4,
