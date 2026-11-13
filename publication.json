@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-12_week5-netsolp-pool_003",
-  "release_tag": "2026-11-12-week5-netsolp-pool-003",
+  "publication_id": "2026-11-13_week5-scatterplot-labels_001",
+  "release_tag": "2026-11-13-week5-scatterplot-labels-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "7c4be2f51947b5d7a79ad566b634abcccbb2fbc2ea2073159b9f37a613a726f4",
-  "manifest_sha256": "7f5c322439e040ebbe1222a058430e5a986704bcda2f40c8afc23ebd32b489c5"
+  "archive_sha256": "d8c0c83725446d137eef59af2625acae572d562c878aa594cbed538084c48c2a",
+  "manifest_sha256": "4103824f639f3a7c0de96f0c10623231a7ac333febb6b32d6f42a0d8743aeeb3"
 }
