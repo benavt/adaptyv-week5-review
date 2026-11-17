@@ -46,6 +46,10 @@ jobs:
           PY
       - name: Verify exact approved files and model hashes
         run: python3 verify_public_review_bundle.py --archive package/week5-review-site.tar.gz --config approved-publication.json --output published-site
+      - name: Block private host names, internal hosts and private paths in the site
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y poppler-utils
+          python3 scripts/check_privacy.py --dir published-site
       - name: Check single-submission deployment guards
         run: python3 -m unittest -v test_publish_pages.py
       - name: Configure GitHub Pages
