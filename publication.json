@@ -1,7 +1,7 @@
 {
-  "publication_id": "2026-11-13_week5-scatterplot-labels_001",
-  "release_tag": "2026-11-13-week5-scatterplot-labels-001",
+  "publication_id": "2026-11-16_week5-privacy-roles_001",
+  "release_tag": "2026-11-16-week5-privacy-roles-001",
   "asset_name": "week5-review-site.tar.gz",
-  "archive_sha256": "d8c0c83725446d137eef59af2625acae572d562c878aa594cbed538084c48c2a",
-  "manifest_sha256": "4103824f639f3a7c0de96f0c10623231a7ac333febb6b32d6f42a0d8743aeeb3"
+  "archive_sha256": "b12cc24438b30a810f9c254524f6f5c3d666b14268b5131a3b67633882361c1a",
+  "manifest_sha256": "441f402a511852b0584b8e4f29f006b157f84497af5ce33c9b1c6d2ecef7f12a"
 }
